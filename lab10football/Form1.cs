@@ -11,11 +11,13 @@ namespace lab10football
     {
         Random random = new Random();
         List<Team> teams = new List<Team>();
+        List<Team> teamsWinners = new List<Team>();
         List<int> scores = new List<int>();
-        List<int> winRound1lyambdaI = new List<int> { };
-        List<string> winRound1name = new List<string>();
-        int matchCounter = 0;
+        List<Label> labels = new List<Label>(8);
+        List<Label> labelsWinners = new List<Label>(4);
 
+        int labelCounter = 0, labelCounter2 = 0, matchCounter = 0;
+        int[] scoreCurrentTeams = new int[2];
         public Form1()
         {
             InitializeComponent();
@@ -30,8 +32,18 @@ namespace lab10football
             }
             teams = teams.OrderBy(x => random.Next()).ToList();
 
-            int ind = 0;
-            Label[] labels = { label1, label2, label3, label4, label5, label6, label7, label8 };
+            int ind = 0; 
+            Label[] labelsTemp = { label1, label2, label3, label4, label5, label6, label7, label8, label9, label10, label11, label12, label13, label14 };
+
+            for (int i = 0; i < 8; i++)
+            {
+                labels.Add(labelsTemp[i]);
+            }
+            for (int i = 8; i < 14; i++)
+            {
+                labelsWinners.Add(labelsTemp[i]);
+            }
+
             foreach (Label label in labels)
             {
                 label.Text = teams[ind].Name;
@@ -53,23 +65,96 @@ namespace lab10football
 
         private void btNext_Click(object sender, EventArgs e)
         {
-            if (matchCounter == 0) playMatch(label1, label2, label12, 0);
-            else if (matchCounter == 1) playMatch(label3, label4, label11, 2);
-            else if (matchCounter == 2) playMatch(label5, label6, label9, 4);
-            else if (matchCounter == 3) playMatch(label7, label8, label10, 6);
-            else if (matchCounter == 4) playMatch(label12, label11, label13, winRound1lyambdaI[0]);
-            else if (matchCounter == 5) playMatch(label9, label10, label14, winRound1lyambdaI[2]);
+            if (matchCounter < 4) playFirstRound();
+            else if (matchCounter < 6) playSecondRound();
+            else if (matchCounter == 6) playThirdRound();
             matchCounter++;
-        }   
+        }
 
-        // мысль: сделать класс с полями label и лямбда, работать с объектами класса
-        public void playMatch(Label lbT1, Label lbT2, Label lbWinner, int lyambdaI)
+
+        public void playFirstRound()
         {
-            scores.Clear();
-            scores = new List<int>(new int[2]);
-            scores[0] = 0; scores[1] = 0;
-            lbT1.ForeColor = Color.Blue;
-            lbT2.ForeColor = Color.Blue;
+            labels[labelCounter].ForeColor = Color.Blue;
+            labels[labelCounter + 1].ForeColor = Color.Blue;
+
+            PoissonDistr();
+
+            lbTeam1.Text = teams[labelCounter].Name;
+            lbTeam2.Text = teams[labelCounter + 1].Name;
+
+            if (scoreCurrentTeams[0] > scoreCurrentTeams[1])
+            {
+                labelsWinners[matchCounter].Text = teams[labelCounter].Name;
+                teamsWinners.Add(new Team(teams[labelCounter].Name, labelCounter));
+            }
+            else
+            {
+                labelsWinners[matchCounter].Text = teams[labelCounter + 1].Name;
+                teamsWinners.Add(new Team(teams[labelCounter + 1].Name, labelCounter + 1));
+            }
+
+            labelsWinners[matchCounter].Visible = true;
+            labelsWinners[matchCounter].ForeColor = Color.Green;
+            labelCounter += 2;
+        }
+        public void playSecondRound()
+        {
+            labelsWinners[labelCounter2].ForeColor = Color.Pink;
+            labelsWinners[labelCounter2 + 1].ForeColor = Color.Pink;
+
+            PoissonDistr();
+
+            lbTeam1.Text = teamsWinners[labelCounter2].Name;
+            lbTeam2.Text = teamsWinners[labelCounter2 + 1].Name;
+
+            if (scoreCurrentTeams[0] > scoreCurrentTeams[1])
+            {
+                labelsWinners[matchCounter].Text = teamsWinners[labelCounter2].Name;
+                teamsWinners.Add(new Team(teamsWinners[labelCounter2].Name, labelCounter2));
+            }
+            else
+            {
+                labelsWinners[matchCounter].Text = teamsWinners[labelCounter2 + 1].Name;
+                teamsWinners.Add(new Team(teamsWinners[labelCounter2 + 1].Name, labelCounter2 + 1));
+            }
+
+            labelsWinners[matchCounter].Visible = true;
+            labelsWinners[matchCounter].ForeColor = Color.Green;
+            labelCounter2 += 2;
+        }
+        public void playThirdRound()
+        {
+            label13.ForeColor = Color.Purple;
+            label14.ForeColor = Color.Purple;
+            foreach (Label label in labels)
+            {
+                label.ForeColor = Color.Gray;
+            }
+            foreach (Label label in labelsWinners)
+            {
+                label.ForeColor = Color.Gray;
+            }
+
+            PoissonDistr();
+
+            lbTeam1.Text = teamsWinners[4].Name;
+            lbTeam2.Text = teamsWinners[5].Name;
+
+            if (scoreCurrentTeams[0] > scoreCurrentTeams[1])
+            {
+                label16.Text = teamsWinners[4].Name;
+            }
+            else
+            {
+                label16.Text = teamsWinners[5].Name;
+            }
+            label15.Visible = true;
+            label16.Visible = true;
+        }
+
+        public void PoissonDistr()
+        {
+            scoreCurrentTeams[0] = 0; scoreCurrentTeams[1] = 0;
             for (int i = 0; i < 2; i++)
             {
                 double sum = 0;
@@ -78,50 +163,18 @@ namespace lab10football
                     // int value = random.Next(0, 5);
                     double value = (double)random.NextDouble();
                     sum += Math.Log10(value);
-                    if (sum < (-1 * teams[lyambdaI + i].Lyambda))
+                    if ((matchCounter < 4 && sum < (-1 * teams[labelCounter + i].Lyambda)) || (matchCounter >= 4 && sum < (-1 * teamsWinners[labelCounter2 + i].Lyambda)))
                     {
                         break;
                     }
-                    scores[i] += 1;
+                    else if (matchCounter == 6 && sum < (-1 * teamsWinners[4 + i].Lyambda)) break;
+                    scoreCurrentTeams[i] += 1;
                 }
             }
-            lbScore1.Text = scores[0].ToString();
-            lbScore2.Text = scores[1].ToString();
-            if (matchCounter < 4)
-            {
-                lbTeam1.Text = teams[lyambdaI].Name;
-                lbTeam2.Text = teams[lyambdaI + 1].Name;
-            }
-            else if(matchCounter == 4) 
-            {
-                lbTeam1.Text = winRound1name[0];
-                lbTeam2.Text = winRound1name[1];
-            }
-            else if (matchCounter == 5)
-            {
-                lbTeam1.Text = winRound1name[2];
-                lbTeam2.Text = winRound1name[3];
-            }
-            lbWinner.Visible = true;
-            lbWinner.ForeColor = Color.Green;
-            if (scores[0] > scores[1])
-            {
-                lbWinner.Text = teams[lyambdaI].Name;
-                if(matchCounter < 4)
-                {
-                    winRound1lyambdaI.Add(lyambdaI);
-                    winRound1name.Add(teams[lyambdaI].Name);
-                }
-            }
-            else
-            {
-                lbWinner.Text = teams[lyambdaI + 1].Name;
-                if (matchCounter < 4)
-                {
-                    winRound1lyambdaI.Add(lyambdaI + 1);
-                    winRound1name.Add(teams[lyambdaI + 1].Name);
-                }
-            }
+
+            lbScore1.Text = scoreCurrentTeams[0].ToString();
+            lbScore2.Text = scoreCurrentTeams[1].ToString();
         }
+
     }
 }
